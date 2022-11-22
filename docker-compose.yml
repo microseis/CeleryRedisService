@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  web:
+    restart: always
+    container_name: web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd /usr/src/app/mailer &&  python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./mailer:/mailer
+      - static_data:/staticfiles
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+    networks:
+      - redis
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    expose:
+      - '6379'
+    container_name: redis
+    networks:
+      - redis
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - static_data:/mailer/staticfiles
+    networks:
+      - redis
+  celery:
+    container_name: celery
+    image: celery:latest
+    restart: always
+    build:
+      context: .
+    networks:
+      - redis
+    command: sh -c "cd /usr/src/app/mailer &&  celery -A mailer.celerysettings worker -l info --without-gossip --without-mingle --without-heartbeat -Ofair --pool=solo"
+    volumes:
+      - static_data:/mailer/staticfiles
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - web
+      - nginx
+
+
+volumes:
+  static_data:
+
+networks:
+  redis:
+    driver: bridge
