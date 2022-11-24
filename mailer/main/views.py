@@ -36,14 +36,12 @@ class ContactView(CreateView):
 class SendTemplateMailView(APIView):
 
     def post(self, request, *args, **kwargs):
-
         for user in Contact.objects.all():
             user.unique_code = uuid.uuid4()
             user.save()
             template = get_template("main/mail_template.html")
             context_data = dict()
             context_data["image_url"] = request.build_absolute_uri("image_load")
-            print(context_data['image_url'])
             context_data['user'] = user.firstname
             url_is = context_data["image_url"] + "/" + str(user.unique_code) + "/"
             context_data['url_is'] = url_is
@@ -55,7 +53,6 @@ class SendTemplateMailView(APIView):
             msg.attach_alternative(html_text, "text/html")
             msg.content_subtype = 'html'
             msg.send()
-            print("done with ", email)
         return HttpResponse("Emails were sent!")
 
 
@@ -75,7 +72,6 @@ class ImageView(APIView):
         user.counter_is = "mail opened"
         user.save()
         red.save(response, "PNG")
-        print("mail opened")
         return Response({"Image view": "success"})
 
 
@@ -84,11 +80,7 @@ def subscribed(request):
 
 
 def sendbulk(request):
-    if request.method =="POST":
+    if request.method == "POST":
         data = request.build_absolute_uri("image_load")
         send_bulk_email.apply_async(args=[data], countdown=10, expires=15)
         return HttpResponse("Emails will be sent in 1 minute")
-
-
-
-

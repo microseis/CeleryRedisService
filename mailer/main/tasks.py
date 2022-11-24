@@ -22,7 +22,6 @@ def send_bulk_email(data):
         template = get_template("main/mail_template.html")
         context_data = dict()
         context_data["image_url"] = data
-        print(context_data['image_url'])
         context_data['user'] = user.firstname
         url_is = context_data["image_url"] + "/" + str(user.unique_code) + "/"
         context_data['url_is'] = url_is
@@ -34,4 +33,4 @@ def send_bulk_email(data):
         msg.attach_alternative(html_text, "text/html")
         msg.content_subtype = 'html'
         msg.send()
-        print("done with ", email)
+

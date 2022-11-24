@@ -43,6 +43,7 @@ services:
       - static_data:/mailer/staticfiles
     networks:
       - redis
+
   celery:
     container_name: celery
     image: celery:latest
